@@ -60,17 +60,19 @@ function onScoreUpdate(dropPosition, bounciness, size, bucketLabel) {
 
 function distance(pointA, pointB) {
   // pointA = [300, 0.5, 16], pointB = [120, 0.45, 16],
-  return _.chain(pointA)
-    .zip(pointB)
-    .map(([a, b]) => (a - b) ** 2)
-    .sum()
-    .value() ** 0.5;
+  return (
+    _.chain(pointA)
+      .zip(pointB)
+      .map(([a, b]) => (a - b) ** 2)
+      .sum()
+      .value() ** 0.5
+  );
 }
 
-function runAnalysis() {
+function runAnalysis_0() {
   // Write code here to analyze stuff
   const testSetSize = 100;
-  const [testSet, trainSet] = splitDataset(outputs, testSetSize);
+  const [testSet, trainSet] = splitDataset(minMax(outputs, 3), testSetSize);
 
   // let numberCorrect = 0;
   // for(let i =0; i< testSet.length; i++) {
@@ -86,7 +88,10 @@ function runAnalysis() {
 
   _.range(1, 20).forEach((k) => {
     const accuracy = _.chain(testSet)
-      .filter((testPoint) => knn(trainSet, _.initial(testPoint), k) === _.last(testPoint))
+      .filter(
+        (testPoint) =>
+          knn(trainSet, _.initial(testPoint), k) === _.last(testPoint)
+      )
       .size()
       .divide(testSetSize)
       .value();
@@ -95,15 +100,40 @@ function runAnalysis() {
   });
 }
 
+
+
+
+function runAnalysis() {
+  // Write code here to analyze stuff
+  const testSetSize = 100;
+  const k = 10;
+
+  _.range(0, 3).forEach(feature => {
+
+    const data = _.map(outputs, row => [row[feature], _.last(row)]);
+
+    const [testSet, trainSet] = splitDataset(minMax(data, 1), testSetSize);
+
+    const accuracy = _.chain(testSet)
+      .filter(
+        (testPoint) =>
+          knn(trainSet, _.initial(testPoint), k) === _.last(testPoint)
+      )
+      .size()
+      .divide(testSetSize)
+      .value();
+
+    console.log(`feature=${feature}, Accuracy:${accuracy}`);
+  });
+}
+
+
 //point = [300, 0.5, 16]
 //row = [300, 0.5, 16, 5]
 function knn(dataset, point, k) {
   return _.chain(dataset)
     .map((row) => {
-      return [
-        distance(_.initial(row), point),
-        _.last(row)
-      ];
+      return [distance(_.initial(row), point), _.last(row)];
     })
     .sortBy((row) => row[0])
     .slice(0, k)
@@ -122,5 +152,23 @@ function splitDataset(data, testCount) {
   const trainSet = _.slice(shuffed, testCount);
   return [testSet, trainSet];
 }
+
+// Normalize data
+function minMax(data, featureCount) {
+  const clonedData = _.cloneDeep(data);
+
+  for (let i = 0; i < featureCount; i++) {
+    const cloumn = clonedData.map((row) => row[i]);
+    const min = _.min(cloumn);
+    const max = _.max(cloumn);
+
+    for (let j = 0; j < clonedData.length; j++) {
+      clonedData[j][i] = (clonedData[j][i] - min) / (max - min);
+    }
+  }
+
+  return clonedData;
+}
+
 
 ```
