@@ -46,7 +46,7 @@ _.chain(numbers)
 
 ```
 
-# KNN
+# KNN by lodash
 ```javascript
 
 const outputs = [];
