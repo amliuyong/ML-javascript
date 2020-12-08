@@ -196,11 +196,11 @@ data.div(otherData)
 
 data.sub(otherData)
 
-# for debug
+// for debug
 data.print()
 
 
-# get data from tensor
+// get data from tensor
 const data = tf.tensor([10, 20, 30]);
 data.get(0);
 
@@ -227,6 +227,7 @@ const data = tf.tensor([
    [10, 27, 30 ]  
   ]);
 
+// slice(startIndex, size) 
 
 data.slice([0, 1], [8, 1]); 
 // => [[20], [21], [22], [23], [24], [25], [26], [27]]
@@ -241,6 +242,76 @@ data.slice([1, 1], [-1, 1]);
 
 ```
 
+## concat
+
+```javascript
+
+const tensorA = tf.tensor([
+  [1, 2, 3],
+  [4, 5, 6]
+]);
+
+const tensorB = tf.tensor([
+  [12, 22, 32],
+  [42, 52, 62]
+]);
+
+
+tensorA.concat(tensorB)
+// [[1 , 2 , 3 ], [4 , 5 , 6 ], [12, 22, 32], [42, 52, 62]]
+
+tensorA.concat(tensorB, 0)
+// [[1 , 2 , 3 ], [4 , 5 , 6 ], [12, 22, 32], [42, 52, 62]]
+
+
+tensorA.concat(tensorB, 1)
+// [[1, 2, 3, 12, 22, 32], [4, 5, 6, 42, 52, 62]]
+
+```
+
+## sum, expandDims, concat
+```
+const jumpData = tf.tensor([
+   [70, 70, 70],
+   [70, 70, 70],
+   [70, 70, 70],
+   [70, 70, 70],
+
+]);
+
+const playerData = tf.tensor([
+  [1, 160],
+  [2, 160],
+  [3, 160],
+  [4, 160],
+]);
+
+
+// what I want: 
+[
+ [210, 1, 160], 
+ [210, 2, 160], 
+ [210, 3, 160], 
+ [210, 4, 160]
+ ]
+
+
+// Method 1
+jumpData.sum(1);
+//=> [210, 210, 210, 210]
+jumpData.sum(1, true)
+// => [[210], [210], [210], [210]]
+playerData.shape // [4,2]
+jumpData.sum(1, true).concat(playerData, 1);
+// => [[210, 1, 160], [210, 2, 160], [210, 3, 160], [210, 4, 160]]
+
+// Mothed 2
+jumpData.sum(1); // [210, 210, 210, 210]
+jumpData.sum(1).expandDims() //[[210, 210, 210, 210],]
+jumpData.sum(1).expandDims(1) // [[210], [210], [210], [210]]
+jumpData.sum(1).expandDims(1).concat(playerData, 1);
+
+```
 
 ## Broadcasting
 
@@ -255,7 +326,6 @@ Can do Broadcasting
 Canot do Broadcasting
 
  - shape[2,3,2] + shape[2, 1]
-
 
 
 
