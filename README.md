@@ -196,7 +196,51 @@ data.div(otherData)
 
 data.sub(otherData)
 
+# for debug
+data.print()
+
+
+# get data from tensor
+const data = tf.tensor([10, 20, 30]);
+data.get(0);
+
+const data2D = tf.tensor([[10, 20, 30],
+                          [3, 5, 9]]);
+
+data2D.get(1, 1);
+
+data2D.set(1, 1, 60); // NO SE T!!!!
+
+
 ```
+## slice
+```javascript
+
+const data = tf.tensor([
+   [10, 20, 30 ],
+   [10, 21, 30 ],
+   [10, 22, 30 ],
+   [10, 23, 30 ],
+   [10, 24, 30 ],
+   [10, 25, 30 ],
+   [10, 26, 30 ],
+   [10, 27, 30 ]  
+  ]);
+
+
+data.slice([0, 1], [8, 1]); 
+// => [[20], [21], [22], [23], [24], [25], [26], [27]]
+
+data.shape // [8,3]
+
+data.slice([0, 1], [data.shape[0], 1]); 
+// => [[20], [21], [22], [23], [24], [25], [26], [27]]
+
+data.slice([1, 1], [-1, 1]); 
+// => [[21], [22], [23], [24], [25], [26], [27]]
+
+```
+
 
 ## Broadcasting
 
