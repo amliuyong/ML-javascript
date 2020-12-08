@@ -329,5 +329,62 @@ Canot do Broadcasting
  - shape[2,3,2] + shape[2, 1]
 
 
+## KNN with tesnsorflow
 
+```javascript
+
+const features = tf.tensor([
+   [-121.1, 47.1 ],
+   [-121.2, 47.2 ],
+   [-121.3, 47.3 ],
+   [-121.4, 47.5 ],
+   [-121.5, 47.6 ],
+   [-121.6, 47.7 ],
+  ]);
+
+const labels = tf.tensor([
+   [201],
+   [202],
+   [203],
+   [204],
+   [205],
+   [206]
+  ]);
+
+const predictionPoint = tf.tensor([-120, 48]);
+
+const distances = features.sub(predictionPoint)
+  .pow(2)
+  .sum(1) // [1.4212668, 1.4422175, 1.4764854, 1.4866083, 1.5524179, 1.6278803]
+  .pow(0.5);
+
+distances.expandDims(1).concat(labels, 1);
+//[[1.4212668, 201], 
+// [1.4422175, 202], 
+// [1.4764854, 203], 
+// [1.4866083, 204], 
+// [1.5524179, 205], 
+// [1.6278803, 206]]
+
+distances.expandDims(1).concat(labels, 1)
+  .unstack()[0] // [1.4212668, 201]
+
+
+const unsortedTesnsorArray = distances.expandDims(1).concat(labels, 1)
+  .unstack() // Array of Tensor
+
+const k = 3;
+
+const topK = unsortedTesnsorArray.sort((a,b) => {
+  return a.get(0) - b.get(0);
+})
+.slice(0, k);
+
+const predictValue = topK.reduce((acc, pair) => {
+    return acc + pair.get(1)
+}, 0) / k;
+
+predictValue;
+
+```
 
