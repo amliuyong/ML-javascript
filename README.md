@@ -172,3 +172,47 @@ function minMax(data, featureCount) {
 
 
 ```
+# TesnorFlow
+
+## tensor
+```javascript
+
+const data = tf.tensor(
+  [
+  [1,2,3],
+  [4,5,6]
+  ]
+);
+const otherData = tf.tensor(
+[
+  [4,5,6],
+  [6,7,8] 
+]
+);
+
+data.add(otherData)
+
+data.div(otherData)
+
+data.sub(otherData)
+
+```
+
+## Broadcasting
+
+Can do Broadcasting
+
+- shape[3] + shape[1]  
+
+- shape[2, 3] + shape[2, 1]
+
+- shape[2,3,2] + shape[3, 1]
+
+Canot do Broadcasting
+
+ - shape[2,3,2] + shape[2, 1]
+
+
+
+
+
