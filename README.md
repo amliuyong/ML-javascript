@@ -270,7 +270,8 @@ tensorA.concat(tensorB, 1)
 ```
 
 ## sum, expandDims, concat
-```
+```javascript
+
 const jumpData = tf.tensor([
    [70, 70, 70],
    [70, 70, 70],
