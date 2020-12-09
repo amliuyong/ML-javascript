@@ -328,6 +328,37 @@ Canot do Broadcasting
 
  - shape[2,3,2] + shape[2, 1]
 
+## standardization with tensorflow
+
+```javascript
+
+const numbers = tf.tensor([
+   [1, 2],
+   [2, 3],
+   [4, 5],
+   [6, 7]  
+]);
+
+//const {mean, variance} = tf.moments(numbers);
+
+//mean // 3.75
+//variance //3.9375
+
+
+const {mean, variance} = tf.moments(numbers, 0);
+mean  //[3.25, 4.25]
+variance // [3.6875, 3.6875]
+
+numbers.sub(mean).div(variance.pow(0.5))
+//
+//[[-1.1717002, -1.1717002], 
+// [-0.6509446, -0.6509446], 
+// [0.3905667 , 0.3905667 ], 
+// [1.432078 , 1.432078 ]]
+//
+
+```
+
 
 ## KNN with tesnsorflow
 
@@ -387,33 +418,69 @@ const predictValue = topK.reduce((acc, pair) => {
 predictValue;
 
 ```
-## standardization with tensorflow
+## KNN with tesnsorflow - complete example
 
 ```javascript
 
-const numbers = tf.tensor([
-   [1, 2],
-   [2, 3],
-   [4, 5],
-   [6, 7]  
-]);
+require("@tensorflow/tfjs-node");
+const tf = require("@tensorflow/tfjs");
+const loadCSV = require("./load-csv");
 
-//const {mean, variance} = tf.moments(numbers);
+function knn(features, labels, predictionPoint, k) {
+  const { mean, variance } = tf.moments(features, 0);
+  const scaledPrediction = predictionPoint.sub(mean).div(variance.pow(0.5));
 
-//mean // 3.75
-//variance //3.9375
+  return (
+    features
+      .sub(mean)               // standardization
+      .div(variance.pow(0.5))  // standardization
+      .sub(scaledPrediction)
+      .pow(2)
+      .sum(1)
+      .pow(0.5)
+      .expandDims(1)
+      .concat(labels, 1)
+      .unstack()
+      .sort((a, b) => {
+        return a.get(0) - b.get(0);
+      })
+      .slice(0, k)
+      .reduce((acc, pair) => {
+        return acc + pair.get(1);
+      }, 0) / k
+  );
+}
 
+let { features, labels, testFeatures, testLabels } = loadCSV(
+  "kc_house_data.csv",
+  {
+    shuffle: true,
+    splitTest: 10,
+    dataColumns: ["lat", "long", "sqft_lot", "sqft_living"],
+    labelColumns: ["price"],
+  }
+);
 
-const {mean, variance} = tf.moments(numbers, 0);
-mean  //[3.25, 4.25]
-variance // [3.6875, 3.6875]
+console.log("testFeatures:", testFeatures);
+console.log("testLabels:", testLabels);
 
-numbers.sub(mean).div(variance.pow(0.5))
-//
-//[[-1.1717002, -1.1717002], 
-// [-0.6509446, -0.6509446], 
-// [0.3905667 , 0.3905667 ], 
-// [1.432078 , 1.432078 ]]
-//
+features = tf.tensor(features);
+labels = tf.tensor(labels);
+
+// testFeatures = tf.tensor(testFeatures);
+// testLabels = tf.tensor(testLabels);
+
+const result = knn(features, labels, tf.tensor(testFeatures[0]), 10);
+
+const err = Math.abs(testLabels[0][0] - result) / testLabels[0][0];
+
+console.log("Guess", result, testLabels[0][0]);
+console.log("err:", err * 100);
+
+testFeatures.forEach((testPoint, i) => {
+  const result = knn(features, labels, tf.tensor(testPoint), 10);
+  const err = Math.abs(testLabels[i][0] - result) / testLabels[i][0];
+  console.log("err:", err * 100);
+});
 
 ```
