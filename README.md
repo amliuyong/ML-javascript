@@ -387,4 +387,33 @@ const predictValue = topK.reduce((acc, pair) => {
 predictValue;
 
 ```
+## standardization with tensorflow
 
+```javascript
+
+const numbers = tf.tensor([
+   [1, 2],
+   [2, 3],
+   [4, 5],
+   [6, 7]  
+]);
+
+//const {mean, variance} = tf.moments(numbers);
+
+//mean // 3.75
+//variance //3.9375
+
+
+const {mean, variance} = tf.moments(numbers, 0);
+mean  //[3.25, 4.25]
+variance // [3.6875, 3.6875]
+
+numbers.sub(mean).div(variance.pow(0.5))
+//
+//[[-1.1717002, -1.1717002], 
+// [-0.6509446, -0.6509446], 
+// [0.3905667 , 0.3905667 ], 
+// [1.432078 , 1.432078 ]]
+//
+
+```
