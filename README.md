@@ -418,7 +418,7 @@ const predictValue = topK.reduce((acc, pair) => {
 predictValue;
 
 ```
-## KNN with tesnsorflow - complete example
+## KNN with tesnsorflow - real word example
 
 ```javascript
 
