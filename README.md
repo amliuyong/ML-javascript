@@ -486,7 +486,7 @@ testFeatures.forEach((testPoint, i) => {
 ```
 # LinearRegression
 
-## LinearRegression using Tensor
+## LinearRegression using Tensor - gradientDescent/standarize/updateLearningRate
 ```javascript
 const tf = require("@tensorflow/tfjs");
 const _ = require("lodash");
@@ -596,7 +596,8 @@ module.exports = LinearRegressionTensor;
 
 ```
 ## train LinearRegression and plot
-```
+```javascript
+
 require('@tensorflow/tfjs-node')
 const tf = require('@tensorflow/tfjs');
 
