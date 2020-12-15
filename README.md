@@ -1202,7 +1202,7 @@ module.exports = MutliLogisticRegression;
 
 
 ```
-```javasscript
+```javascript
 require("@tensorflow/tfjs-node");
 const tf = require("@tensorflow/tfjs");
 const _ = require("lodash");
