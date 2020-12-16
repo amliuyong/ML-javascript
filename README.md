@@ -1063,6 +1063,7 @@ plot({
 # MutliLogisticRegression
 
 ```javascript
+
 const tf = require("@tensorflow/tfjs");
 
 class MutliLogisticRegression {
@@ -1077,11 +1078,11 @@ class MutliLogisticRegression {
         learningRate: 0.1,
         iterations: 1000,
         batchSize: 10,
-        descisionBoundary: 0.5
+        descisionBoundary: 0.5,
       },
       options
     );
-    this.weights = tf.zeros([this.features.shape[1], this.labels.shape[1]]); 
+    this.weights = tf.zeros([this.features.shape[1], this.labels.shape[1]]);
   }
 
   // Batch Gradient Descent
@@ -1093,8 +1094,7 @@ class MutliLogisticRegression {
       .transpose()
       .matMul(differences)
       .div(features.shape[0]);
-
-    this.weights = this.weights.sub(slopes.mul(this.options.learningRate));
+    return this.weights.sub(slopes.mul(this.options.learningRate));
   }
 
   train() {
@@ -1107,12 +1107,17 @@ class MutliLogisticRegression {
         const { batchSize } = this.options;
         const startIndex = j * batchSize;
 
-        const featureSlice = this.features.slice(
-          [startIndex, 0],
-          [batchSize, -1]
-        );
-        const labelSlice = this.labels.slice([startIndex, 0], [batchSize, -1]);
-        this.gradientDescent(featureSlice, labelSlice);
+        this.weights = tf.tidy(() => {
+          const featureSlice = this.features.slice(
+            [startIndex, 0],
+            [batchSize, -1]
+          );
+          const labelSlice = this.labels.slice(
+            [startIndex, 0],
+            [batchSize, -1]
+          );
+          return this.gradientDescent(featureSlice, labelSlice);
+        }); // end tidy
       }
 
       this.bHistory.push(this.weights.get(0, 0));
@@ -1123,9 +1128,9 @@ class MutliLogisticRegression {
 
   predict(observations) {
     return this.processFeatures(observations)
-    .matMul(this.weights)
-    .softmax()
-    .argMax(1);
+      .matMul(this.weights)
+      .softmax()
+      .argMax(1);
   }
 
   test(testFeatures, testLabels) {
@@ -1135,7 +1140,8 @@ class MutliLogisticRegression {
     testLabels = tf.tensor(testLabels).argMax(1);
 
     const incorrect = predictions.notEqual(testLabels).sum().get();
-    const correctPercentage = (predictions.shape[0] - incorrect) / predictions.shape[0];
+    const correctPercentage =
+      (predictions.shape[0] - incorrect) / predictions.shape[0];
 
     console.log("correctPercentage", correctPercentage);
     return correctPercentage;
@@ -1154,31 +1160,33 @@ class MutliLogisticRegression {
 
   standarize(features) {
     const { mean, variance } = tf.moments(features, 0);
+    const filler = variance.cast("bool").logicalNot().cast("float32");
+
     this.mean = mean;
-    this.variance = variance;
+    this.variance = variance.add(filler); // change 0 -> 1
+
     return features.sub(this.mean).div(this.variance.pow(0.5));
   }
 
   // Corss Entropy
   recordCost() {
-    const guesses = this.features.matMul(this.weights).sigmoid();
-    const termOne = this.labels
-    .transpose()
-    .matMul(guesses.log());
+    const cost = tf.tidy(() => {
+      const guesses = this.features.matMul(this.weights).sigmoid();
+      const termOne = this.labels.transpose().matMul(guesses.add(1e-7).log());
+      const termTwo = this.labels
+        .mul(-1)
+        .add(1)
+        .transpose()
+        .matMul(guesses.mul(-1).add(1).add(1e-7).log());
+      const cost = termOne
+        .add(termTwo)
+        .div(this.features.shape[0])
+        .mul(-1)
+        .get(0, 0);
 
-    const termTwo = this.labels
-    .mul(-1)
-    .add(1)
-    .transpose()
-    .matMul(
-        guesses.mul(-1).add(1).log()
-    );
-    const cost = termOne.add(termTwo)
-    .div(this.features.shape[0])
-    .mul(-1)
-    .get(0, 0);
-
-    console.log("cost:", cost);
+      console.log("cost:", cost);
+      return cost;
+    });
     this.costHistory.unshift(cost);
   }
 
@@ -1200,8 +1208,10 @@ class MutliLogisticRegression {
 
 module.exports = MutliLogisticRegression;
 
-
 ```
+## MutliLogisticRegression - cars.csv
+
+
 ```javascript
 require("@tensorflow/tfjs-node");
 const tf = require("@tensorflow/tfjs");
@@ -1259,3 +1269,58 @@ regression.predict([
 regression.test(testFeatures, testLabels);
 
 ```
+
+
+## MutliLogisticRegression - mnist
+
+```javascript
+require("@tensorflow/tfjs-node");
+const tf = require("@tensorflow/tfjs");
+const _ = require("lodash");
+const loadCSV = require("../load-csv");
+const plot = require("node-remote-plot");
+const mnist = require("mnist-data");
+
+const MutliLogisticRegression = require("./MutilLogisticRegression");
+
+let mnistData = mnist.training(0, 60000);
+const features = mnistData.images.values.map((image) => _.flatMap(image));
+const encodedLabels = mnistData.labels.values.map((label) => {
+  const row = new Array(10).fill(0);
+  row[label] = 1;
+  return row;
+});
+mnistData = null;
+
+//console.log(encodedLabels);
+
+const regression = new MutliLogisticRegression(features, encodedLabels, {
+  learningRate: 1,
+  iterations: 20,
+  batchSize: 100,
+});
+
+regression.train();
+
+const testMnistData = mnist.testing(0, 10000);
+const testFeatures = testMnistData.images.values.map(image => _.flatMap(image));
+const testEncodedLabels = testMnistData.labels.values.map((label) => {
+  const row = new Array(10).fill(0);
+  row[label] = 1;
+  return row;
+});
+
+const accuracy = regression.test(testFeatures, testEncodedLabels);
+console.log("accuracy:", accuracy);
+
+
+plot({
+  x: regression.costHistory.reverse(),
+  xLabel: 'Iteration #', 
+  yLabel: 'Cross Entropy'
+});
+
+// node --max-old-space-size=4096 mnist.js
+
+```
+
